@@ -24,12 +24,12 @@ module Capistrano
 
         assert_equal 'POST', request.method
         assert_equal 'application/json', request['Content-Type']
-        assert_equal 'https://www.app.harrow.io/api/capistrano/sign-up', request.uri.to_s
+        assert_equal '/api/capistrano/sign-up', request.path.to_s
         assert_equal signup_data.to_json, request.body
       end
 
       def test_sign_up_returns_response_data_in_case_of_validation_error
-        validation_error = Net::HTTPUnprocessableEntity.new(1.1, 422, "Unacceptable Entity")
+        validation_error = Net::HTTPResponse.new(1.1, 422, "Unacceptable Entity")
         def validation_error.body
           {reason: 'invalid', errors: {email: ['not_unique']}}.to_json
         end
@@ -44,7 +44,7 @@ module Capistrano
       end
 
       def test_sign_up_raises_a_protocol_error_in_case_of_a_non_2xx_response
-        invalid_entity_response = Net::HTTPUnprocessableEntity.new(1.1, 422, "Unacceptable Entity")
+        invalid_entity_response = Net::HTTPResponse.new(1.1, 422, "Unacceptable Entity")
         def invalid_entity_response.body; "{}"; end
 
         http = TestHTTPClient.new.
@@ -78,7 +78,7 @@ module Capistrano
         assert_equal 1, http.requests.length
         request = http.requests.first
         assert_equal 'GET', request.method
-        assert_equal API::PARTICIPATION_URL.to_s, request.uri.to_s
+        assert_equal URI(API::PARTICIPATION_URL).to_s, request.path
       end
 
       def test_participating_returns_value_from_json_response

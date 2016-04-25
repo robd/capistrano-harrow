@@ -75,10 +75,10 @@ integration and deployment built by the Capistrano team.
         sprintf(MESSAGES.fetch(tag, tag.to_s), format_data)
       end
 
-      def initialize(ui:, config:,api:)
-        @ui = ui
-        @config = config
-        @api = api
+      def initialize(params={ui: UI::TTY, api: API, config: Config::Git})
+        @ui = params.fetch(:ui)
+        @config = params.fetch(:config)
+        @api = params.fetch(:api)
         @quit = false
         @password = nil
       end

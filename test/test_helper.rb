@@ -134,7 +134,7 @@ class TestHTTPClient
     raise @exception if @exception
 
     params = URI.encode_www_form(params)
-    request = Net::HTTP::Get.new(url.merge(params))
+    request = Net::HTTP::Get.new(url.merge(params).to_s)
     headers.each do |header, value|
       request[header.to_s] = value
     end
@@ -147,7 +147,7 @@ class TestHTTPClient
   def post(url, headers, data)
     raise @exception if @exception
 
-    request = Net::HTTP::Post.new(url)
+    request = Net::HTTP::Post.new(url.path)
     headers.each do |header, value|
       request[header.to_s] = value
     end

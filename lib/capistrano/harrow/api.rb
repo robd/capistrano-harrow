@@ -9,16 +9,19 @@ module Capistrano
       class ProtocolError < StandardError; end
       class FatalError < StandardError; end
 
-      def initialize(url:,client:,participation_url: PARTICIPATION_URL)
-        @url = URI(url)
-        @client = client
-        @participation_url = URI(participation_url)
+      def initialize(params={url: 'https://www.app.harrow.io/api/',
+                             client: HTTP,
+                             participation_url: PARTICIPATION_URL,
+                            })
+        @url = URI(params.fetch(:url))
+        @client = params.fetch(:client)
+        @participation_url = URI(params.fetch(:participation_url, PARTICIPATION_URL))
       end
 
       def participating?
         response = @client.get(
-          @url.merge(@participation_url),
-          {'User-Agent': user_agent},
+          @participation_url,
+          {'User-Agent' => user_agent},
           {}
         )
 
@@ -36,8 +39,8 @@ module Capistrano
         begin
           response = @client.post(
             @url.merge(@url.path + '/capistrano/sign-up'),
-            {'Content-Type': 'application/json',
-             'User-Agent': user_agent,
+            {'Content-Type' => 'application/json',
+             'User-Agent' => user_agent,
             },
             data.to_json,
           )
@@ -45,10 +48,10 @@ module Capistrano
           raise FatalError.new(e)
         end
 
-        case response
-        when Net::HTTPSuccess
+        response_code = response.code.to_i
+        if response_code >= 200 && response_code < 300
           JSON.parse(response.body, symbolize_names: true)
-        when Net::HTTPUnprocessableEntity
+        elsif response_code == 422
           data = JSON.parse(response.body, symbolize_names: true)
           if data.fetch(:reason, 'ok') == 'invalid'
             data

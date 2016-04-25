@@ -2,10 +2,10 @@ module Capistrano
   module Harrow
     module UI
       class TTY
-        def initialize(input: $stdin, output: $stdout, timeout: 30)
-          @in = input
-          @out = output
-          @timeout = timeout
+        def initialize(params={input: $stdin, output: $stdout, timeout: 30})
+          @in = params.fetch(:input, $stdin)
+          @out = params.fetch(:output, $stdout)
+          @timeout = params.fetch(:timeout, 30)
         end
 
         def show(text)
