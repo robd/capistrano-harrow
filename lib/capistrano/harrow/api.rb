@@ -3,7 +3,7 @@ require 'json'
 module Capistrano
   module Harrow
     class API
-      PARTICIPATION_URL = 'http://harrow.capistranorb.com/participate'
+      PARTICIPATION_URL = 'http://harrow.capistranorb.com/participating'
 
       class NetworkError < StandardError; end
       class ProtocolError < StandardError; end
