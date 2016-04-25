@@ -21,6 +21,8 @@ module Capistrano
  | |  | | (_| | |  | | | (_) \ V  V /| | (_) |
  |_|  |_|\__,_|_|  |_|  \___/ \_/\_(_)_|\___/
 
+    Learn more: http://hrw.io/about-harrow
+
 }
       end
 
