@@ -73,6 +73,8 @@ module Capistrano
         end
 
         def set(key, value)
+          return unless File.exists? @config_file
+
           begin
             `git config --file #{@config_file.shellescape} #{key.to_s.shellescape} #{value.to_s.shellescape}`
           rescue Errno::ENOENT

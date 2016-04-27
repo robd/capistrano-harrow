@@ -10,6 +10,7 @@ class TestUI
     @shown = []
     @answers = answers
     @timeouts = {}
+    @default_answers = {}
   end
 
   def add_answer(question, answer)
@@ -36,9 +37,14 @@ class TestUI
     @answers.fetch(prompt_str, ['']).shift
   end
 
+  def default_answers_for(prompt_str)
+    @default_answers.fetch(prompt_str, [])
+  end
+
   def prompt(prompt_str, answers=[:yes,:no])
     raise Capistrano::Harrow::UI::TimeoutError.new if @timeouts.key? prompt_str
     @prompted << prompt_str
+    @default_answers[prompt_str] = answers
     @answers.fetch(prompt_str, [answers.first]).shift
   end
 
@@ -84,9 +90,11 @@ class TestHarrowAPI
     self
   end
 
-  def participating?
+  def participating?(params={})
     @requests << {url: 'http://harrow.capistranorb.com',
-                  method: 'GET'}
+                  method: 'GET',
+                  params: params,
+    }
     true
   end
 
@@ -134,7 +142,7 @@ class TestHTTPClient
     raise @exception if @exception
 
     params = URI.encode_www_form(params)
-    request = Net::HTTP::Get.new(url.merge(params).to_s)
+    request = Net::HTTP::Get.new(url.merge('?'+params).to_s)
     headers.each do |header, value|
       request[header.to_s] = value
     end

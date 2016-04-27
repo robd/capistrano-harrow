@@ -3,9 +3,7 @@ module Capistrano
   module Harrow
     class Installer
       PROMPTS = {
-        want_install: %q{ Would you like to try Harrow for free now? It's completely
-free and we'll setup your account based on your Git repository
-metadata. },
+        want_install: %q{ Try it now? },
         enter_password: "Enter a password for your Harrow.io account",
         confirm_password: "Confirm your password",
         retry_request: "Retry?",
@@ -29,6 +27,11 @@ metadata. },
 ┃                                                ┃
 ┃             %-35<project_name>s┃
 ┃                                                ┃
+┃     Log in here or check your email            ┃
+┃     for an account confirmation link           ┃
+┃                                                ┃
+┃     https://www.app.harrow.io                  ┃
+┃                                                ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 },
         existing_account_found: %q{
@@ -50,11 +53,13 @@ metadata. },
         password_too_short: "Your password needs to be at least 10 characters long",
         signup_data: %q{
 
-Your account will be created with the following
-information:
+We'll set-up your account for you with the following
+details:
 
   %<name>s <%<email>s>
 
+},
+        repository: %{
 For this repository with the URL:
 
   %<repository_url>s
@@ -64,9 +69,16 @@ For this repository with the URL:
 
       def self.preinstall_message
         %q{
-Harrow.io: Harrow is a web-based platform for continuous
-integration and deployment built by the Capistrano team.
-(Learn more: http://hrw.io/cap-integration)
+ - Free for small projects!
+
+ - Test, deploy and collaborate online easily
+   using tools you already know and love!
+
+ - Trigger tasks automatically based on Git changes
+   and webhooks. Get notified by email, slack, etc.
+
+ - Works seamlessly for PHP, Node.js, Ansible, Python, Go,
+   Capistrano and more!
 
 }
       end
@@ -86,7 +98,7 @@ integration and deployment built by the Capistrano team.
       def install!
         return if @config.disabled?
         return if @config.installed?
-        return unless @api.participating?
+        return unless @api.participating?(signup_data)
 
         @ui.show Banner.new.to_s
         @ui.show self.class.preinstall_message
@@ -104,14 +116,17 @@ integration and deployment built by the Capistrano team.
         data = signup_data
         if data[:email].to_s.empty? or data[:name].to_s.empty?
           begin
-            data[:name] = @ui.prompt(PROMPTS[:enter_name])
-            data[:email] = @ui.prompt(PROMPTS[:enter_email])
+            data[:name] = @ui.prompt(PROMPTS[:enter_name], [])
+            data[:email] = @ui.prompt(PROMPTS[:enter_email], [])
           rescue UI::TimeoutError
             quit!("timeout")
           end
         end
 
         @ui.show self.class.message(:signup_data, data)
+        unless data[:repository_url].to_s.empty?
+          @ui.show self.class.message(:repository, data)
+        end
 
         @password = prompt_password!
         unless @password

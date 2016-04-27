@@ -5,7 +5,7 @@ module Capistrano
         def initialize(params={input: $stdin, output: $stdout, timeout: 30})
           @in = params.fetch(:input, $stdin)
           @out = params.fetch(:output, $stdout)
-          @timeout = params.fetch(:timeout, 30)
+          @timeout = params.fetch(:timeout, 60)
         end
 
         def show(text)

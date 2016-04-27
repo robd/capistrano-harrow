@@ -5,7 +5,7 @@ module Capistrano
     class HTTP
       def get(url, headers, params)
         params = URI.encode_www_form(params)
-        request = Net::HTTP::Get.new(url.merge(params).to_s)
+        request = Net::HTTP::Get.new(url.merge('?'+params).to_s)
         headers.each do |header, value|
           request[header.to_s] = value
         end

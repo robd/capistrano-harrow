@@ -1,4 +1,5 @@
 require 'json'
+require 'digest/sha1'
 
 module Capistrano
   module Harrow
@@ -18,11 +19,18 @@ module Capistrano
         @participation_url = URI(params.fetch(:participation_url, PARTICIPATION_URL))
       end
 
-      def participating?
+      def participating?(params={})
+        name = params.delete(:name)
+        email = params.delete(:email)
+        repository_url = params.delete(:repository_url)
+
+        params[:name_present] = !name.to_s.empty?
+        params[:email_present] = !email.to_s.empty?
+        params[:repository_id] = Digest::SHA1.new.hexdigest(repository_url.to_s)
         response = @client.get(
           @participation_url,
           {'User-Agent' => user_agent},
-          {}
+          params,
         )
 
         case response
@@ -66,10 +74,16 @@ module Capistrano
       private
 
       def user_agent
+        begin
+          git_version = `git version`.split(' ').last
+        rescue Errno::ENOENT
+          git_version = 'none'
+        end
+
         result = "capistrano-harrow=#{Capistrano::Harrow::VERSION}"
         result << " capistrano=#{Capistrano::VERSION}" if defined? Capistrano::VERSION
         result << " ruby=#{RUBY_VERSION}"
-
+        result << " git=#{git_version}"
         result
       end
 

@@ -21,7 +21,10 @@ module Capistrano
  | |  | | (_| | |  | | | (_) \ V  V /| | (_) |
  |_|  |_|\__,_|_|  |_|  \___/ \_/\_(_)_|\___/
 
-    Learn more: http://hrw.io/about-harrow
+      Continuous Integration & Deployment
+      Built by the team behind Capistrano
+
+   Learn more at http://hrw.io/cap-for-teams
 
 }
       end

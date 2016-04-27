@@ -78,7 +78,7 @@ module Capistrano
         assert_equal 1, http.requests.length
         request = http.requests.first
         assert_equal 'GET', request.method
-        assert_equal URI(API::PARTICIPATION_URL).to_s, request.path
+        assert_equal URI(API::PARTICIPATION_URL).path, URI(request.path).path
       end
 
       def test_participating_returns_value_from_json_response
@@ -118,7 +118,35 @@ module Capistrano
         assert_equal false, api.participating?
       end
 
-      def test_it_sets_the_user_agent_based_on_this_gem_and_ruby_version
+      def test_participating_includes_sign_up_data_as_query_parameters
+        signup_data = {
+          name: 'John Doe',
+          email: '',
+          repository_url: 'https://github.com/john-doe/example.git',
+        }
+
+        http = TestHTTPClient.new
+
+        api = API.new(url: 'https://www.app.harrow.io/api/', client: http)
+
+        repository_digest = Digest::SHA1.new.hexdigest(signup_data[:repository_url])
+
+        api.participating?(signup_data)
+
+        expected_params = {
+          'name_present' => 'true',
+          'email_present' => 'false',
+          'repository_id' => repository_digest,
+        }
+
+        assert_equal 1, http.requests.length
+        request = http.requests.first
+        params_sent = Hash[URI.decode_www_form(URI.parse(request.path).query)]
+        assert_equal 'GET', request.method
+        assert_equal expected_params, params_sent
+      end
+
+      def test_it_sets_the_user_agent_based_on_this_gem_and_ruby_version_and_git_version
         Capistrano.const_set('VERSION','3.5.0') unless defined? Capistrano::VERSION
 
         http = TestHTTPClient.new
@@ -126,8 +154,10 @@ module Capistrano
 
         api.participating?
 
+        git_version = `git --version`.split(' ').last
+
         request = http.requests.first
-        user_agent = "capistrano-harrow=#{VERSION} capistrano=#{Capistrano::VERSION} ruby=#{RUBY_VERSION}"
+        user_agent = "capistrano-harrow=#{VERSION} capistrano=#{Capistrano::VERSION} ruby=#{RUBY_VERSION} git=#{git_version}"
         assert_equal user_agent, request['User-Agent']
       end
     end

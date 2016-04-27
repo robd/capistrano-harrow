@@ -177,6 +177,23 @@ module Capistrano
         harrow.install!
 
         assert_includes ui.shown, expected
+        assert_includes ui.shown, Installer.message(:repository, {repository_url: config.repository_url})
+      end
+
+      def test_it_does_not_show_the_repository_url_if_it_is_empty
+        ui = TestUI.new
+
+        default_repository = TestConfig.new.repository_url
+        config = TestConfig.new.tap do |c|
+          def c.repository_url; ''; end
+        end
+
+        harrow = Installer.new(ui: ui, config: config, api: TestHarrowAPI.new)
+
+        harrow.install!
+
+        assert_includes ui.shown, Installer.message(:signup_data, harrow.signup_data)
+        refute_includes ui.shown, Installer.message(:repository, {repository_url: default_repository})
       end
 
       def test_it_asks_the_user_for_a_password
@@ -421,11 +438,41 @@ module Capistrano
         assert_includes ui.prompts, Installer::PROMPTS[:enter_email]
       end
 
+      def test_it_shows_no_default_answers_when_asking_for_a_username_and_email
+        ui = TestUI.new.
+             add_answer(Installer::PROMPTS[:want_install], 'yes')
+
+        config = TestConfig.new.tap do |o|
+          def o.username; ''; end
+          def o.email; ''; end
+        end
+
+        harrow = Installer.new(ui: ui, config: config, api: TestHarrowAPI.new)
+        harrow.install!
+
+        assert_equal [], ui.default_answers_for(Installer::PROMPTS[:enter_name])
+        assert_equal [], ui.default_answers_for(Installer::PROMPTS[:enter_email])
+      end
+
+      def test_it_reports_sign_up_data_when_checking_for_participation
+        ui = TestUI.new
+
+        config = TestConfig.new
+
+        api = TestHarrowAPI.new
+        harrow = Installer.new(ui: ui, config: config, api: api)
+        harrow.install!
+
+        assert_includes api.requests, {url: 'http://harrow.capistranorb.com',
+                                       method: 'GET',
+                                       params: harrow.signup_data}
+      end
+
       def test_it_silently_quits_if_the_api_reports_no_participation
         ui = TestUI.new
         config = TestConfig.new
         harrowAPI = TestHarrowAPI.new.tap do |o|
-          def o.participating?
+          def o.participating?(params={})
             false
           end
         end
