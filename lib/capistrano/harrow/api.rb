@@ -35,7 +35,11 @@ module Capistrano
 
         case response
         when Net::HTTPSuccess
-          return ::JSON.parse(response.body, symbolize_names: true).fetch(:participating, false)
+          parsed_body = ::JSON.parse(response.body, symbolize_names: true)
+          is_participating = parsed_body.delete(:participating)
+          return false unless is_participating
+
+          return parsed_body
         end
 
         false

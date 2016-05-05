@@ -65,10 +65,7 @@ For this repository with the URL:
   %<repository_url>s
 
 },
-      }
-
-      def self.preinstall_message
-        %q{
+   preinstall: %q{
  - Free for small projects!
 
  - Test, deploy and collaborate online easily
@@ -80,11 +77,16 @@ For this repository with the URL:
  - Works seamlessly for PHP, Node.js, Ansible, Python, Go,
    Capistrano and more!
 
-}
+},
+
+      }
+
+      def message(tag, format_data)
+        sprintf(@messages.fetch(tag, tag.to_s), format_data)
       end
 
-      def self.message(tag, format_data)
-        sprintf(MESSAGES.fetch(tag, tag.to_s), format_data)
+      def prompt(tag)
+        @prompts.fetch(tag, tag.to_s)
       end
 
       def initialize(params={ui: UI::TTY, api: API, config: Config::Git})
@@ -93,18 +95,22 @@ For this repository with the URL:
         @api = params.fetch(:api)
         @quit = false
         @password = nil
+        update_message_catalog!({messages: MESSAGES,
+                                 prompts: PROMPTS})
       end
 
       def install!
         return if @config.disabled?
         return if @config.installed?
-        return unless @api.participating?(signup_data)
+        messages = @api.participating?(signup_data)
+        return unless messages
+        update_message_catalog!(messages)
 
         @ui.show Banner.new.to_s
-        @ui.show self.class.preinstall_message
+        @ui.show message(:preinstall, {})
 
         begin
-          if @ui.prompt(PROMPTS[:want_install]).downcase == 'no'
+          if @ui.prompt(prompt(:want_install)).downcase == 'no'
             quit!
             return
           end
@@ -116,16 +122,16 @@ For this repository with the URL:
         data = signup_data
         if data[:email].to_s.empty? or data[:name].to_s.empty?
           begin
-            data[:name] = @ui.prompt(PROMPTS[:enter_name], [])
-            data[:email] = @ui.prompt(PROMPTS[:enter_email], [])
+            data[:name] = @ui.prompt(prompt(:enter_name), [])
+            data[:email] = @ui.prompt(prompt(:enter_email), [])
           rescue UI::TimeoutError
             quit!("timeout")
           end
         end
 
-        @ui.show self.class.message(:signup_data, data)
+        @ui.show message(:signup_data, data)
         unless data[:repository_url].to_s.empty?
-          @ui.show self.class.message(:repository, data)
+          @ui.show message(:repository, data)
         end
 
         @password = prompt_password!
@@ -152,7 +158,7 @@ For this repository with the URL:
         end
 
         @quit = true
-        @ui.show(self.class.message(:aborting,{reason: reason}))
+        @ui.show(message(:aborting,{reason: reason}))
       end
 
       def quit?
@@ -168,21 +174,21 @@ For this repository with the URL:
           @config.organization_uuid = response_data[:organization_uuid]
           if response_data.fetch(:reason, 'ok') == 'invalid'
             if response_data.fetch(:errors, {}).fetch(:email, []).first == 'not_unique'
-              @ui.show self.class.message(:existing_account_found, {})
+              @ui.show message(:existing_account_found, {})
               return :account_exists
             else
-              @ui.show self.class.message(:api_fatal_error, {})
+              @ui.show message(:api_fatal_error, {})
               return response_data
             end
           else
-            @ui.show self.class.message(:installation_successful, response_data)
+            @ui.show message(:installation_successful, response_data)
             return :signed_up
           end
         rescue API::NetworkError
-          @ui.show self.class.message(:api_network_error, {})
+          @ui.show message(:api_network_error, {})
           should_retry = false
           begin
-            if @ui.prompt(PROMPTS[:retry_request], [:no, :yes]) == :yes
+            if @ui.prompt(prompt(:retry_request), [:no, :yes]) == :yes
               should_retry = true
             end
           rescue UI::TimeoutError
@@ -192,10 +198,10 @@ For this repository with the URL:
 
           retry if should_retry
         rescue API::ProtocolError
-          quit! self.class.message(:api_protocol_error, {})
+          quit! message(:api_protocol_error, {})
           return
         rescue API::FatalError
-          quit! self.class.message(:api_fatal_error, {})
+          quit! message(:api_fatal_error, {})
           return
         end
       end
@@ -203,20 +209,29 @@ For this repository with the URL:
       def prompt_password!
         tries = 3
         while tries > 0
-          password = @ui.prompt_password(PROMPTS[:enter_password])
-          confirmed_password = @ui.prompt_password(PROMPTS[:confirm_password])
+          password = @ui.prompt_password(prompt(:enter_password))
+          confirmed_password = @ui.prompt_password(prompt(:confirm_password))
 
 
           if password == confirmed_password && password.to_s.length >= 10
             return password
           elsif password.to_s.length < 10
-            @ui.show self.class.message(:password_too_short, {})
+            @ui.show message(:password_too_short, {})
           else
-            @ui.show self.class.message(:password_mismatch, {})
+            @ui.show message(:password_mismatch, {})
           end
 
           tries = tries - 1
         end
+      end
+
+      def update_message_catalog!(new_messages)
+        return unless new_messages.respond_to? :fetch
+        @messages = {} unless @messages
+        @prompts = {} unless @prompts
+
+        @messages.merge!(new_messages.fetch(:messages, {}))
+        @prompts.merge!(new_messages.fetch(:prompts, {}))
       end
 
     end

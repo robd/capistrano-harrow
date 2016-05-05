@@ -81,7 +81,7 @@ module Capistrano
         assert_equal URI(API::PARTICIPATION_URL).path, URI(request.path).path
       end
 
-      def test_participating_returns_value_from_json_response
+      def test_participating_returns_false_if_json_response_contains_participating_false
         response = Net::HTTPOK.new('1.1', '200', 'OK').tap do |r|
           def r.body
             '{"participating": false}'
@@ -94,12 +94,22 @@ module Capistrano
         api = API.new(url: 'https://www.app.harrow.io/api/', client: http)
 
         assert_equal false, api.participating?
+      end
 
-        def response.body
-          '{"participating": true}'
+      def test_participating_returns_messages_extracted_from_successful_response
+        response = Net::HTTPOK.new('1.1', '200', 'OK').tap do |r|
+          def r.body
+            '{"participating": true, "messages": {"test_message":"bar"}, "prompts": {"test_prompt":"foo"}}'
+          end
         end
 
-        assert_equal true, api.participating?
+        http = TestHTTPClient.new.
+               respond_with(response)
+
+        api = API.new(url: 'https://www.app.harrow.io/api/', client: http)
+        messages = api.participating?
+        expected = {messages: {test_message: 'bar'}, prompts: {test_prompt: 'foo'}}
+        assert_equal expected, messages
       end
 
       def test_participating_returns_false_in_case_of_any_error
