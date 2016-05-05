@@ -1,0 +1,76 @@
+#!/usr/bin/env ruby
+
+require 'json'
+require 'open-uri'
+require 'rubygems'
+require 'date'
+require 'pstore'
+
+GEM_API_PATTERN="https://rubygems.org/api/v1/downloads/%s-%s.json"
+
+GEMS = %w{
+  capistrano/capistrano
+  harrowio/capistrano-harrow
+}
+
+def round_to_hour(t)
+  rounded = Time.at((t.to_i / 3600.0).round * 3600)
+  t.is_a?(DateTime) ? rounded.to_datetime : rounded
+end
+
+store = PStore.new("stats.pstore")
+
+while true do
+
+  puts "Starting..."
+
+  store.transaction do
+
+    nowish = round_to_hour Time.now
+    store[nowish] = Hash.new
+
+    GEMS.each do |gem|
+
+      store[nowish][gem] = Hash.new
+
+      `git ls-remote https://github.com/#{gem}.git 2>&1`.lines.each do |line|
+
+        next unless line.match /refs\/tags/
+        next unless line.match /\d$/
+        next if line.match /pre/
+
+        gem_name  = File.basename(gem)
+
+        version   = line.split[-1].sub(/refs\/tags\/v?/, '').gsub('-', '.')
+        downloads = 0
+
+        begin
+          rubygems_url = sprintf GEM_API_PATTERN, gem_name, version
+          rubygems_data = open(rubygems_url).read
+          rubygems = JSON.parse(rubygems_data)
+          downloads = rubygems["version_downloads"]
+        rescue => e
+          $stderr.printf "Error Opening URI: %s\n", e
+          # do nothing
+        end
+
+        next if downloads == 0
+        store[nowish][gem][version] = downloads
+
+      end
+
+    end
+
+    sorted = Hash.new
+    GEMS.each do |gem|
+      sorted[gem] = store[nowish][gem].sort_by do |version, _|
+        Gem::Version.new(version.dup)
+      end
+    end
+
+  end
+
+  puts "...Sleeping"
+  sleep 3600
+
+end

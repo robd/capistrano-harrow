@@ -1,0 +1,84 @@
+- name: ensure git installed
+  apt:
+    name: git
+    state: latest
+    update_cache: yes
+
+- name: ensure apache2 installed
+  apt:
+    name: apache2
+    state: latest
+    update_cache: yes
+
+- name: create apache2 vhost config
+  copy:
+    dest: /etc/apache2/sites-available/harrow.capistranorb.com.conf
+    mode: 0644
+    src: etc/apache2/sites-available/harrow.capistranorb.com.conf
+
+- name: copy cgi-script into place
+  copy:
+    dest: /opt/harrow/participating.rb
+    group: www-data
+    mode: 0755
+    owner: www-data
+    src: opt/harrow/participating.rb
+
+- name: copy cgi-script libraries into place
+  copy:
+    dest: /opt/harrow/log.rb
+    group: www-data
+    mode: 0644
+    owner: www-data
+    src: opt/harrow/log.rb
+
+- name: copy index.html into place
+  copy:
+    dest: /opt/harrow/index.html
+    group: www-data
+    mode: 0644
+    owner: www-data
+    src: opt/harrow/index.html
+
+- name: enable apache2 vhost
+  file:
+    dest: /etc/apache2/sites-enabled/harrow.capistranorb.com.conf
+    src: /etc/apache2/sites-available/harrow.capistranorb.com.conf
+    state: link
+
+- name: ensure cgi script log destination exists
+  file:
+    owner: www-data
+    group: www-data
+    mode:  0755
+    path: /var/local/capistrano
+    state: directory
+
+- name: stats collector executable
+  copy:
+    dest: /usr/local/bin/download-stats
+    mode: 0755
+    owner: root
+    src:  usr/local/bin/download-stats
+
+- name: stats collector upstart service
+  copy:
+    dest: /etc/init/download-stats.conf
+    src:  etc/init/download-stats.conf
+
+- name: detailed stats collector executable
+  copy:
+    dest: /usr/local/bin/detailed-download-stats
+    mode: 0755
+    owner: root
+    src:  usr/local/bin/detailed-download-stats
+
+- name: detailed stats collector upstart service
+  copy:
+    dest: /etc/init/detailed-download-stats.conf
+    src:  etc/init/detailed-download-stats.conf
+
+- name: reload apache2
+  service:
+    name: apache2
+    state: reloaded

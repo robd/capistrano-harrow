@@ -1,0 +1,21 @@
+#!/bin/bash -ex
+
+while true; do
+
+  # Truncate the
+  ts=$(echo "$(date "+%Y%m%d%H%M") - ($(date +%M)%5)" | bc)
+
+  # Number of downloads for current version of the gem
+  numCap=$(curl --silent https://rubygems.org/api/v1/gems/capistrano.json | jq '.version_downloads')
+
+  # Number of downloads for current version of the gem
+  numCapHarrow=$(curl --silent https://rubygems.org/api/v1/gems/capistrano-harrow.json | jq '.version_downloads')
+
+  # Number of requests in the logfile
+  numRequests=$(wc -l /var/log/apache2/other_vhosts_access.log | awk '{print $1}')
+
+  printf "$ts\t$numCap\t$numCapHarrow\t$numRequests\n" >> stats.tsv
+
+  sleep 600
+
+done
