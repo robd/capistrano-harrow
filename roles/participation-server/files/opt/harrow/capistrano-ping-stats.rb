@@ -36,7 +36,7 @@ log    = Log.new('/var/local/capistrano/log.pstore')
 log.each(&result.method(:handle_log_entry))
 
 CGI.new.out('Content-Type' => 'text/csv', 'Connection' => 'close') do
-  CSV($stdout, {headers: true}) do |csv|
+  CSV.generate({headers: true}) do |csv|
     csv << ["Date", "Pings"]
     result.to_csv(csv)
   end
