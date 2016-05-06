@@ -73,7 +73,7 @@ module Capistrano
 
         harrow.install!
 
-        assert_includes ui.shown, harrow.message(:installation_successful, response_data)
+        assert_includes ui.shown, harrow.message(:installation_successful, response_data.merge(email: 'john.doe@example.com'))
       end
 
       def test_it_shows_a_success_message_if_the_user_is_already_registered
@@ -122,7 +122,8 @@ module Capistrano
 
         harrow.install!
 
-        assert_includes ui.shown, Banner.new.to_s
+        banner = Banner.new
+        assert_equal true, ui.shown.any? { |message| banner.variants.include? message}
       end
 
       def test_it_shows_a_preinstall_message_if_harrow_is_not_installed
@@ -534,7 +535,7 @@ module Capistrano
         harrow.install!
 
         assert_equal "Aborting: none...\n", harrow.message(:aborting, {reason: ': none'})
-        assert_equal ' Try it now? ', harrow.prompt(:want_install)
+        assert_equal Installer::PROMPTS[:want_install], harrow.prompt(:want_install)
       end
 
       def test_it_uses_messages_from_the_gem_for_non_overridden_messages
@@ -551,7 +552,7 @@ module Capistrano
         harrow.install!
 
         assert_equal "Aborting: none...\n", harrow.message(:aborting, {reason: ': none'})
-        assert_equal ' Try it now? ', harrow.prompt(:want_install)
+        assert_equal Installer::PROMPTS[:want_install], harrow.prompt(:want_install)
       end
     end
   end

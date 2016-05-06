@@ -7,26 +7,39 @@ module Capistrano
       end
 
       def to_s
-				text_banner
+	text_banner
+      end
+
+
+      def variants
+        [
+          %q{
+     ___   _   ___ ___ ___ _____ ___    _   _  _  ___
+    / __| /_\ | _ \_ _/ __|_   _| _ \  /_\ | \| |/ _ \
+   | (__ / _ \|  _/| |\__ \ | | |   / / _ \| .` | (_) |
+    \___/_/ \_\_| |___|___/ |_| |_|_\/_/ \_\_|\_|\___/
+
+    Learn about our web-based collaboration and
+    automation platform for Capistrano: hrw.io/auto-cap
+
+},
+          %q{
+     ___   _   ___ ___ ___ _____ ___    _   _  _  ___
+    / __| /_\ | _ \_ _/ __|_   _| _ \  /_\ | \| |/ _ \
+   | (__ / _ \|  _/| |\__ \ | | |   / / _ \| .` | (_) |
+    \___/_/ \_\_| |___|___/ |_| |_|_\/_/ \_\_|\_|\___/
+
+    Enhance Capistrano with awesome collaboration and
+    automation features, learn more at hrw.io/cap-auto
+
+},
+        ]
       end
 
       private
 
       def text_banner
-        %q{
-  _    _                              _
- | |  | |                            (_)
- | |__| | __ _ _ __ _ __ _____      ___  ___
- |  __  |/ _` | '__| '__/ _ \ \ /\ / / |/ _ \
- | |  | | (_| | |  | | | (_) \ V  V /| | (_) |
- |_|  |_|\__,_|_|  |_|  \___/ \_/\_(_)_|\___/
-
-      Continuous Integration & Deployment
-      Built by the team behind Capistrano
-
-   Learn more at http://hrw.io/cap-for-teams
-
-}
+        variants.sample
       end
 
 			#

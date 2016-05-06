@@ -3,7 +3,8 @@ module Capistrano
   module Harrow
     class Installer
       PROMPTS = {
-        want_install: %q{ Try it now? },
+        want_install: %q{Enhance Capistrano with awesome collaboration and
+automation features? },
         enter_password: "Enter a password for your Harrow.io account",
         confirm_password: "Confirm your password",
         retry_request: "Retry?",
@@ -17,20 +18,18 @@ module Capistrano
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃                    Success!                    ┃
 ┃                                                ┃
-┃     You have been registered on Harrow.io.     ┃
+┃          Your account has been created.        ┃
 ┃                                                ┃
-┃     Your organization is called:               ┃
+┃     Organization:  %-28<organization_name>s┃
 ┃                                                ┃
-┃             %-35<organization_name>s┃
+┃     Project:       %-28<project_name>s┃
 ┃                                                ┃
-┃     Your project is called:                    ┃
+┃     We sent an email to:                       ┃
 ┃                                                ┃
-┃             %-35<project_name>s┃
+┃     %-43<email>s┃
 ┃                                                ┃
-┃     Log in here or check your email            ┃
-┃     for an account confirmation link           ┃
-┃                                                ┃
-┃     https://www.app.harrow.io                  ┃
+┃     Please confirm your email address          ┃
+┃     to proceed.                                ┃
 ┃                                                ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 },
@@ -66,16 +65,17 @@ For this repository with the URL:
 
 },
    preinstall: %q{
- - Free for small projects!
+We built Harrow.io, a platform which adds automation,
+collaboration and logging features to any command line
+tool. Harrow is optimized to work with Capistrano,
+but it works with absolutely anything!
 
- - Test, deploy and collaborate online easily
-   using tools you already know and love!
+Harrow covers everything including testing, deployment
+and maintenance for your project. Completely free for
+small projects and there's a 14 day trial including
+support to get you up and running.
 
- - Trigger tasks automatically based on Git changes
-   and webhooks. Get notified by email, slack, etc.
-
- - Works seamlessly for PHP, Node.js, Ansible, Python, Go,
-   Capistrano and more!
+                                -– The Capistrano Team
 
 },
 
@@ -181,7 +181,8 @@ For this repository with the URL:
               return response_data
             end
           else
-            @ui.show message(:installation_successful, response_data)
+            success_message_data = response_data.merge(email: @config.email)
+            @ui.show message(:installation_successful, success_message_data)
             return :signed_up
           end
         rescue API::NetworkError
