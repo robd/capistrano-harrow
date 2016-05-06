@@ -15,7 +15,7 @@ s.transaction(true) do
     cgi.out("status" => "OK", "type" => "text/plain", "connection" => "close") do
       result = "Invalid gem: \"#{gem}\"\n\nTry:\n\n"
       gems.each do |allowed_gem|
-        result << "http://#{cgi.host}/#{cgi.path_info}?gem=#{allowed_gem}\n"
+        result << "http://#{cgi.host}#{cgi.script_name}?gem=#{allowed_gem}\n"
       end
 
       result
