@@ -7,11 +7,11 @@ require 'pstore'
 cgi = CGI.new
 gem = cgi["gem"]
 
-s = PStore.new('stats.pstore')
+s = PStore.new('/var/local/capistrano/stats.pstore')
 s.transaction(true) do
   versions = s[s.roots.last][gem].keys
   cgi.out("status" => "OK", "type" => "text/csv", "connection" => "close") do
-    CSV.generate(headers: true, force_quotes: true) do |csv|
+    CSV($stdout, {headers: true, force_quotes: true}) do |csv|
       csv << ["DateTime"] + versions.collect { |v| "v#{v}" }
       s.roots.each do |time_bucket|
         row = [time_bucket.utc]
@@ -23,5 +23,3 @@ s.transaction(true) do
     end
   end
 end
-
-

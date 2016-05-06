@@ -24,6 +24,22 @@
     owner: www-data
     src: opt/harrow/participating.rb
 
+- name: CGI gem-download-stats.rb
+  copy:
+    dest: /opt/harrow/gem-download-stats.rb
+    group: www-data
+    mode: 0755
+    owner: www-data
+    src: opt/harrow/gem-download-stats.rb
+
+- name: CGI capistrano-ping-stats.rb
+  copy:
+    dest: /opt/harrow/capistrano-ping-stats.rb
+    group: www-data
+    mode: 0755
+    owner: www-data
+    src: opt/harrow/capistrano-ping-stats.rb
+
 - name: copy cgi-script libraries into place
   copy:
     dest: /opt/harrow/log.rb
@@ -53,6 +69,13 @@
     mode:  0755
     path: /var/local/capistrano
     state: directory
+
+- name: ensure detailed stats collector can write data
+  file:
+    owner: www-data
+    group: www-data
+    mode:  0644
+    path: /var/local/capistrano/stats.pstore
 
 - name: stats collector executable
   copy:
